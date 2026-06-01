@@ -1,95 +1,101 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { AlertCircle, CheckCircle, Clock } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { es } from "date-fns/locale"
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 // Definición simple del tipo Ticket basado en nuestro modelo Prisma
 type Ticket = {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  companyId: string
-  createdAt: string
-  updatedAt: string
-}
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export default function Dashboard() {
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [loading, setLoading] = useState(true)
-  const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTickets()
-  }, [])
+    fetchTickets();
+  }, []);
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch("/api/tickets")
-      const data = await res.json()
-      setTickets(data)
+      const res = await fetch("/api/tickets");
+      const data = await res.json();
+      setTickets(data);
     } catch (error) {
-      console.error("Error fetching tickets:", error)
+      console.error("Error fetching tickets:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleResolve = async (ticket: Ticket) => {
-    if (ticket.status === "Resuelto") return
-    
-    setResolvingId(ticket.id)
+    if (ticket.status === "Resuelto") return;
+
+    setResolvingId(ticket.id);
+
     try {
       const res = await fetch(`/api/tickets/${ticket.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ status: "Resuelto" }),
-      })
+      });
 
-      if (res.ok) {
-        const updatedTicket = await res.json()
-        
-        const ticketIndex = tickets.findIndex((t) => t.id === updatedTicket.id)
-        if (ticketIndex !== -1) {
-          tickets[ticketIndex] = updatedTicket
-          setTickets(tickets) // React no verá esto como un cambio de estado válido
-        }
-      }
+      if (!res.ok) return;
+
+      const updatedTicket = await res.json();
+
+      setTickets((prev) =>
+        prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t)),
+      );
     } catch (error) {
-      console.error("Error resolving ticket:", error)
+      console.error("Error resolving ticket:", error);
     } finally {
-      setResolvingId(null)
+      setResolvingId(null);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      
       {/* Header Fijo */}
       <header className="bg-blue-600 text-white shadow-md sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">TechCorp Soporte</h1>
-          <span className="text-sm bg-blue-700 px-3 py-1 rounded-full">Usuario Actual: Admin</span>
+          <span className="text-sm bg-blue-700 px-3 py-1 rounded-full">
+            Usuario Actual: Admin
+          </span>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-6">
         <div className="mb-6 flex justify-between items-end">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Tickets Asignados</h2>
-            <p className="text-gray-500">Gestiona las solicitudes de los clientes.</p>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Tickets Asignados
+            </h2>
+            <p className="text-gray-500">
+              Gestiona las solicitudes de los clientes.
+            </p>
           </div>
         </div>
 
@@ -100,10 +106,12 @@ export default function Dashboard() {
             </div>
           ) : (
             tickets.map((ticket) => (
-              <div 
-                key={ticket.id} 
+              <div
+                key={ticket.id}
                 className={`bg-white rounded-lg shadow-sm border p-5 transition-colors ${
-                  ticket.status === "Resuelto" ? "border-green-200 bg-green-50/30" : "border-gray-200"
+                  ticket.status === "Resuelto"
+                    ? "border-green-200 bg-green-50/30"
+                    : "border-gray-200"
                 }`}
               >
                 <div className="flex justify-between items-start mb-3">
@@ -122,7 +130,7 @@ export default function Dashboard() {
                       {ticket.companyId}
                     </span>
                   </div>
-                  
+
                   {ticket.status === "Resuelto" ? (
                     <span className="flex items-center text-green-600 text-sm font-medium gap-1">
                       <CheckCircle className="w-4 h-4" />
@@ -136,14 +144,21 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{ticket.title}</h3>
-                <p className="text-gray-600 text-sm mb-4">{ticket.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  {ticket.title}
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  {ticket.description}
+                </p>
 
                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
                   <span className="text-xs text-gray-400">
-                    Creado hace {formatDistanceToNow(new Date(ticket.createdAt), { locale: es })}
+                    Creado hace{" "}
+                    {formatDistanceToNow(new Date(ticket.createdAt), {
+                      locale: es,
+                    })}
                   </span>
-                  
+
                   {ticket.status !== "Resuelto" && (
                     <button
                       onClick={() => handleResolve(ticket)}
@@ -178,7 +193,6 @@ export default function Dashboard() {
           <span className="text-xs font-medium">Resueltos</span>
         </div>
       </div>
-
     </div>
-  )
+  );
 }
