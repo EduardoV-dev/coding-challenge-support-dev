@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { getTickets } from "@/features/tickets";
 import { getCurrentSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
@@ -10,12 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const tickets = await prisma.ticket.findMany({
-      orderBy: { createdAt: "desc" },
-      where: {
-        companyId: session.companyId,
-      },
-    });
+    const tickets = await getTickets(session.companyId);
 
     return NextResponse.json(tickets);
   } catch (error) {

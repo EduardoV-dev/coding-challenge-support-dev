@@ -4,7 +4,7 @@ type Session = {
 };
 
 export async function getCurrentSession(): Promise<Session | null> {
-  // Challenge mock: replace with real auth/session provider in production.
+  // TODO: Challenge mock: replace with real auth/session provider in production.
   return {
     userId: "admin-1",
     companyId: "TechCorp",

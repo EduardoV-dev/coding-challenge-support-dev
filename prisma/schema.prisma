@@ -7,13 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TicketStatus {
+  Abierto
+  Resuelto
+}
+
+enum TicketPriority {
+  Normal
+  Urgente
+}
+
 model Ticket {
-  id          String   @id @default(uuid())
+  id          String         @id @default(uuid())
   title       String
   description String
-  status      String   @default("Abierto") // Abierto, Resuelto
-  priority    String   @default("Normal")  // Normal, Urgente
-  companyId   String   // TechCorp, Orosi, etc.
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      TicketStatus   @default(Abierto)
+  priority    TicketPriority @default(Normal)
+  companyId   String // TechCorp, Orosi, etc.
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }

@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server";
+import { updateTicketStatus } from "@/features/tickets";
 import { getCurrentSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-
-// Función auxiliar simulada para envío de correos
-async function sendEmailNotification(ticketId: string, companyId: string) {
-  return new Promise((resolve) => {
-    console.log(
-      `Enviando notificación urgente a ${companyId} para el ticket ${ticketId}...`,
-    );
-    resolve(true);
-  });
-}
 
 export async function PATCH(
   request: Request,
@@ -26,38 +16,25 @@ export async function PATCH(
     const { id } = await params;
     const { status } = await request.json();
 
-    if (status !== "Abierto" && status !== "Resuelto") {
+    const updatedTicket = await updateTicketStatus({
+      id,
+      companyId: session.companyId,
+      status,
+    });
+
+    return NextResponse.json(updatedTicket);
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_STATUS") {
       return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
     }
 
-    // Buscamos el ticket para ver su prioridad
-    const ticket = await prisma.ticket.findFirst({
-      where: {
-        id,
-        companyId: session.companyId,
-      },
-    });
-
-    if (!ticket) {
+    if (error instanceof Error && error.message === "TICKET_NOT_FOUND") {
       return NextResponse.json(
         { error: "Ticket no encontrado" },
         { status: 404 },
       );
     }
 
-    const updatedTicket = await prisma.ticket.update({
-      where: { id },
-      data: { status },
-    });
-
-    if (ticket.priority === "Urgente" && status === "Resuelto") {
-      void sendEmailNotification(ticket.id, ticket.companyId).catch((error) => {
-        console.error("Error sending urgent notification:", error);
-      });
-    }
-
-    return NextResponse.json(updatedTicket);
-  } catch (error) {
     console.error("Error updating ticket:", error);
     return NextResponse.json(
       { error: "Error updating ticket" },
